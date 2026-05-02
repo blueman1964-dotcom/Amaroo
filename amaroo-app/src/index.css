@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Source Sans 3', sans-serif;
+  background:
+    radial-gradient(circle at top right, rgba(196, 96, 58, 0.2), transparent 45%),
+    radial-gradient(circle at 20% 30%, rgba(10, 74, 82, 0.14), transparent 48%),
+    #f7f3ee;
+}
+
+.btn {
+  @apply rounded-lg bg-[#0A4A52] text-white px-3 py-2 hover:bg-[#083b42] transition;
+}
