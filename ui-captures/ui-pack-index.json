@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-05-05",
+  "project": "Amaroo Vessel Manager",
+  "purpose": "UI review handoff pack",
+  "groups": [
+    {
+      "group": "top-level-tabs",
+      "items": [
+        { "file": "dashboard.png", "tab": "Dashboard" },
+        { "file": "weather.png", "tab": "Weather", "subtab": "default" },
+        { "file": "tides.png", "tab": "Tides" },
+        { "file": "bar-cams.png", "tab": "Bar Cams" },
+        { "file": "speed.png", "tab": "Speed", "subtab": "default" },
+        { "file": "passage-planner.png", "tab": "Passage Planner" },
+        { "file": "voyage-log.png", "tab": "Voyage Log" },
+        { "file": "engine-hours.png", "tab": "Engine Hours" },
+        { "file": "maintenance.png", "tab": "Maintenance" },
+        { "file": "fuel-log.png", "tab": "Fuel Log" },
+        { "file": "fluid-levels.png", "tab": "Fluid Levels", "subtab": "default" },
+        { "file": "safety-gear.png", "tab": "Safety Gear" },
+        { "file": "parts.png", "tab": "Parts" },
+        { "file": "reports.png", "tab": "Reports" },
+        { "file": "receipts.png", "tab": "Receipts" },
+        { "file": "contacts.png", "tab": "Contacts" },
+        { "file": "documents.png", "tab": "Documents" },
+        { "file": "settings.png", "tab": "Settings" },
+        { "file": "user-guide.png", "tab": "User Guide" },
+        { "file": "emergency-card.png", "tab": "Emergency Card" }
+      ]
+    },
+    {
+      "group": "weather-subtabs",
+      "items": [
+        { "file": "weather-map.png", "tab": "Weather", "subtab": "Wind & Swell Map" },
+        { "file": "weather-marine-forecasts.png", "tab": "Weather", "subtab": "Marine Forecasts" },
+        { "file": "weather-grib-download.png", "tab": "Weather", "subtab": "GRIB / Download" }
+      ]
+    },
+    {
+      "group": "speed-subtabs",
+      "items": [
+        { "file": "speed-predictor.png", "tab": "Speed", "subtab": "Predictor" },
+        { "file": "speed-logbook.png", "tab": "Speed", "subtab": "Logbook" },
+        { "file": "speed-calibration.png", "tab": "Speed", "subtab": "Calibration" },
+        { "file": "speed-settings.png", "tab": "Speed", "subtab": "Settings" }
+      ]
+    },
+    {
+      "group": "fluids-subtabs",
+      "items": [
+        { "file": "fluids-fluid-checks.png", "tab": "Fluid Levels", "subtab": "Fluid Checks" },
+        { "file": "fluids-watermaker-log.png", "tab": "Fluid Levels", "subtab": "Watermaker Log" }
+      ]
+    }
+  ]
+}

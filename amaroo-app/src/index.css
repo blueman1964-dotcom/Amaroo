@@ -13,6 +13,51 @@ body {
     #f7f3ee;
 }
 
+:root {
+  --app-card-radius: 1rem;
+  --app-card-shadow: 0 8px 24px rgba(10, 74, 82, 0.08);
+}
+
+.app-card {
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-card-shadow);
+}
+
+button,
+input,
+select,
+textarea {
+  min-height: 40px;
+}
+
 .btn {
   @apply rounded-lg bg-[#0A4A52] text-white px-3 py-2 hover:bg-[#083b42] transition;
+}
+
+@keyframes gps-pulse {
+  0%   { transform: scale(1);   opacity: 1; }
+  70%  { transform: scale(2.8); opacity: 0; }
+  100% { transform: scale(1);   opacity: 0; }
+}
+.gps-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.5);
+  animation: gps-pulse 1.8s ease-out infinite;
+}
+
+.map-fullscreen-container:fullscreen,
+.map-fullscreen-container:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #061a1d;
+}
+
+.map-fullscreen-container:fullscreen .leaflet-container,
+.map-fullscreen-container:-webkit-full-screen .leaflet-container {
+  width: 100vw !important;
+  height: 100dvh !important;
 }

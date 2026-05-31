@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
-import { extractHourlyWeather, fetchRouteWeather } from '../utils/weatherApi'
+import { useEffect, useMemo, useState } from 'react'
+import { extractHourlyWeather, fetchCurrentConditions, fetchRouteWeather, fetchWeatherForecast } from '../utils/weatherApi'
+import { fetchOceanCurrent, formatCurrent, interpolateCurrent } from '../utils/oceanCurrent'
 
 const BOM_FORECASTS = [
-  { name: 'Moreton Bay', lat: -27.5, lon: 153.4, icon: '⚓', url: 'https://www.bom.gov.au/cgi-bin/marine/forecasts.pl?area=qt&tz=EST&type=IDQ10183' },
+  { name: 'Moreton Bay', lat: -27.524, lon: 153.43, icon: '⚓', url: 'https://www.bom.gov.au/cgi-bin/marine/forecasts.pl?area=qt&tz=EST&type=IDQ10183' },
   { name: 'Gold Coast Waters', lat: -28.0, lon: 153.4, icon: '🌊', url: 'https://www.bom.gov.au/marine/forecasts.shtml?area=qt' },
   { name: 'Sunshine Coast Waters', lat: -26.7, lon: 153.1, icon: '🌊', url: 'https://www.bom.gov.au/marine/forecasts.shtml?area=qt' },
   { name: 'Wide Bay Waters', lat: -25.0, lon: 153.2, icon: '🌊', url: 'https://www.bom.gov.au/marine/forecasts.shtml?area=qt' },
@@ -40,7 +41,7 @@ const TIDE_OFFICIAL_LINKS = [
 ]
 
 const LOCATIONS = [
-  { name: 'Moreton Bay', lat: -27.5, lon: 153.4, zoom: 7 },
+  { name: 'Moreton Bay', lat: -27.524, lon: 153.43, zoom: 8 },
   { name: 'Wide Bay Bar', lat: -25.0, lon: 153.2, zoom: 9 },
   { name: 'Sunshine Coast', lat: -26.7, lon: 153.1, zoom: 9 },
   { name: 'Gold Coast', lat: -28.0, lon: 153.4, zoom: 9 },
@@ -79,23 +80,18 @@ function mapOverlayForWindy(overlay) {
 }
 
 function buildWindySrc(location, overlay) {
-  const url = new URL('https://embed.windy.com/embed2.html')
-  url.searchParams.set('lat', String(location.lat))
-  url.searchParams.set('lon', String(location.lon))
-  url.searchParams.set('zoom', String(location.zoom))
-  url.searchParams.set('level', 'surface')
-  url.searchParams.set('overlay', mapOverlayForWindy(overlay))
-  url.searchParams.set('product', 'ecmwf')
-  url.searchParams.set('menu', '')
-  url.searchParams.set('message', 'true')
+  const url = new URL('https://embed.windy.com/embed.html')
   url.searchParams.set('type', 'map')
   url.searchParams.set('location', 'coordinates')
-  url.searchParams.set('detail', 'true')
-  url.searchParams.set('detailLat', String(location.lat))
-  url.searchParams.set('detailLon', String(location.lon))
+  url.searchParams.set('metricRain', 'default')
+  url.searchParams.set('metricTemp', 'default')
   url.searchParams.set('metricWind', 'kt')
-  url.searchParams.set('metricTemp', '°C')
-  url.searchParams.set('metricRain', 'mm')
+  url.searchParams.set('zoom', String(location.zoom || 8))
+  url.searchParams.set('overlay', mapOverlayForWindy(overlay))
+  url.searchParams.set('product', 'ecmwf')
+  url.searchParams.set('level', 'surface')
+  url.searchParams.set('lat', String(location.lat))
+  url.searchParams.set('lon', String(location.lon))
   return url.toString()
 }
 
@@ -103,7 +99,7 @@ function windyOpenUrl(location, overlay = 'currents') {
   const lat = location.lat.toFixed(3)
   const lon = location.lon.toFixed(3)
   const zoom = location.zoom
-  return `https://www.windy.com/${lat}/${lon}?${overlay},${lat},${lon},${zoom}`
+  return `https://www.windy.com/?${overlay},${lat},${lon},${zoom}`
 }
 
 function windyStationUrl(station, overlay = 'tides') {
@@ -124,18 +120,80 @@ function ForecastCard({ forecast }) {
   )
 }
 
+const HOME_LAT = -27.524
+const HOME_LON = 153.430
+
+function degreesToArrow(deg) {
+  if (deg == null) return '–'
+  const arrows = ['↓', '↙', '←', '↖', '↑', '↗', '→', '↘']
+  return arrows[Math.round(deg / 45) % 8]
+}
+
+const LAST_WEATHER_KEY = 'amaroo_last_weather_snapshot'
+
 export default function Weather() {
   const [subTab, setSubTab] = useState('map')
-  const [overlay, setOverlay] = useState('wind')
+  const [overlay, setOverlay] = useState('waves')
   const [location, setLocation] = useState(LOCATIONS[0])
   const [nearest, setNearest] = useState('')
   const [forecasts, setForecasts] = useState({})
   const [tideStation, setTideStation] = useState(TIDE_STATIONS[0])
+  const [currentConditions, setCurrentConditions] = useState(null)
+  const [oceanCurrent, setOceanCurrent] = useState(null)
+  const [conditionsLoading, setConditionsLoading] = useState(false)
+  const [conditionsUpdatedAt, setConditionsUpdatedAt] = useState(null)
+  const [forecastDays, setForecastDays] = useState([])
+  const [forecastLoading, setForecastLoading] = useState(false)
+  const [gpsCoords, setGpsCoords] = useState(null)
 
-  const windySrc = useMemo(() => buildWindySrc(location, overlay), [location, overlay])
-  const windyOverlayUrl = useMemo(() => windyOpenUrl(location, mapOverlayForWindy(overlay)), [location, overlay])
-  const windyWindUrl = useMemo(() => windyOpenUrl(location, 'wind'), [location])
-  const windyWavesUrl = useMemo(() => windyOpenUrl(location, 'waves'), [location])
+  const activeCoords = gpsCoords || { lat: location.lat, lon: location.lon }
+
+  const fetchConditionsAndForecast = async (lat, lon) => {
+    setConditionsLoading(true)
+    setForecastLoading(true)
+    const [condResult, forecastResult, currentResult] = await Promise.all([
+      fetchCurrentConditions(lat, lon),
+      fetchWeatherForecast(lat, lon),
+      fetchOceanCurrent(lat, lon, 6),
+    ])
+    if (condResult.conditions) {
+      setCurrentConditions(condResult.conditions)
+      setConditionsUpdatedAt(new Date())
+      try {
+        window.localStorage.setItem(LAST_WEATHER_KEY, JSON.stringify(condResult.conditions))
+      } catch {
+        // Ignore local storage write errors.
+      }
+    }
+    const nearestCurrent = interpolateCurrent(currentResult, Date.now())
+    setOceanCurrent(nearestCurrent)
+    setConditionsLoading(false)
+    if (forecastResult.days?.length) setForecastDays(forecastResult.days)
+    setForecastLoading(false)
+  }
+
+  useEffect(() => {
+    // Try GPS, fall back to selected location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude }
+          setGpsCoords(coords)
+          fetchConditionsAndForecast(coords.lat, coords.lon)
+        },
+        () => fetchConditionsAndForecast(location.lat, location.lon),
+        { timeout: 8000 },
+      )
+    } else {
+      fetchConditionsAndForecast(location.lat, location.lon)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const windySrc = useMemo(() => buildWindySrc({ ...location, lat: activeCoords.lat, lon: activeCoords.lon }, overlay), [location, overlay, activeCoords])
+  const windyOverlayUrl = useMemo(() => windyOpenUrl({ ...location, lat: activeCoords.lat, lon: activeCoords.lon }, mapOverlayForWindy(overlay)), [location, overlay, activeCoords])
+  const windyWindUrl = useMemo(() => windyOpenUrl({ ...location, lat: activeCoords.lat, lon: activeCoords.lon }, 'wind'), [location, activeCoords])
+  const windyWavesUrl = useMemo(() => windyOpenUrl({ ...location, lat: activeCoords.lat, lon: activeCoords.lon }, 'waves'), [location, activeCoords])
   const windyTidesUrl = useMemo(() => windyOpenUrl(location, 'tides'), [location])
   const windyCurrentsUrl = useMemo(() => windyOpenUrl(location, 'currents'), [location])
 
@@ -174,7 +232,6 @@ export default function Weather() {
         {[
           { id: 'map', label: 'Wind & Swell Map' },
           { id: 'bom', label: 'Marine Forecasts' },
-          { id: 'tides', label: 'Tides' },
           { id: 'grib', label: 'GRIB / Download' },
         ].map((tab) => (
           <button
@@ -190,6 +247,94 @@ export default function Weather() {
 
       {subTab === 'map' && (
         <div className="bg-white rounded-lg shadow border-t-4 border-[#0A4A52] p-4 space-y-3">
+
+          {/* Current Conditions */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-semibold text-[#0A4A52]">Current Conditions {gpsCoords ? '📍 GPS' : `— ${location.name}`}</h4>
+              <button type="button" onClick={() => fetchConditionsAndForecast(activeCoords.lat, activeCoords.lon)}
+                className="text-xs text-[#0A4A52] border border-[#0A4A52] px-2 py-1 rounded hover:bg-teal-50">
+                Refresh
+              </button>
+            </div>
+            {conditionsLoading ? (
+              <div className="text-sm text-slate-400">Fetching conditions…</div>
+            ) : currentConditions ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <div className="rounded-lg bg-slate-50 p-2">
+                  <div className="text-xs text-slate-500 mb-0.5">💨 Wind</div>
+                  <div className="font-bold text-[#0A4A52]">{currentConditions.windKn ?? '–'} kn</div>
+                  <div className="text-xs text-slate-500">{currentConditions.windDirCompass} · gusts {currentConditions.windGustKn ?? '–'} kn</div>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-2">
+                  <div className="text-xs text-slate-500 mb-0.5">🌊 Waves</div>
+                  <div className="font-bold text-[#0A4A52]">{currentConditions.waveHeightM ?? '–'} m</div>
+                  <div className="text-xs text-slate-500">{currentConditions.wavePeriodS ?? '–'}s · {currentConditions.waveDirCompass}</div>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-2">
+                  <div className="text-xs text-slate-500 mb-0.5">🌀 Swell</div>
+                  <div className="font-bold text-[#0A4A52]">{currentConditions.swellHeightM ?? '–'} m</div>
+                  <div className="text-xs text-slate-500">{currentConditions.swellDirCompass} · {currentConditions.swellPeriodS ?? '–'}s</div>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-2">
+                  <div className="text-xs text-slate-500 mb-0.5">🌡️ Temp</div>
+                  <div className="font-bold text-[#0A4A52]">{currentConditions.temperatureC ?? '–'}°C</div>
+                  {conditionsUpdatedAt && <div className="text-xs text-slate-400">{conditionsUpdatedAt.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}</div>}
+                </div>
+                {oceanCurrent && (
+                  <div className="rounded-lg bg-slate-50 p-2 md:col-span-2">
+                    <div className="text-xs text-slate-500 mb-0.5">↔ Current</div>
+                    <div className="font-bold text-[#0A4A52]">{formatCurrent(oceanCurrent.currentSpeedKn, oceanCurrent.currentDirectionDeg)}</div>
+                    <div className="text-xs text-slate-500">Source: Stormglass</div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-400">No conditions data. Click Refresh to fetch.</div>
+            )}
+          </div>
+
+          {/* 7-day forecast */}
+          {(forecastLoading || forecastDays.length > 0) && (
+            <div>
+              <h4 className="font-semibold text-[#0A4A52] mb-2">7-Day Forecast</h4>
+              {forecastLoading ? (
+                <div className="text-sm text-slate-400">Loading forecast…</div>
+              ) : (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {forecastDays.map((day) => {
+                    const date = new Date(day.date + 'T00:00:00')
+                    return (
+                      <div key={day.date} className="shrink-0 w-28 rounded-lg bg-slate-50 border border-slate-200 p-2 text-center text-xs">
+                        <div className="font-semibold text-[#0A4A52]">{date.toLocaleDateString('en-AU', { weekday: 'short' })}</div>
+                        <div className="text-slate-400">{date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</div>
+                        <div className="mt-1">🌊 {day.maxWaveM ?? '–'}m</div>
+                        <div>🌀 {day.maxSwellM ?? '–'}m {day.swellPeriodS ? `${day.swellPeriodS}s` : ''}</div>
+                        <div>{degreesToArrow(day.swellDirDeg)} {day.swellDirCompass ?? '–'}</div>
+                        <div>💨 {day.maxWindKn ?? '–'}kn</div>
+                        {day.maxGustKn != null && <div className="text-slate-500">G {day.maxGustKn}kn</div>}
+                        <div>🌡️ {day.maxTempC ?? '–'}°C</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Windy deep-link buttons */}
+          <div className="flex flex-wrap gap-2">
+            <a href={windyWavesUrl} target="_blank" rel="noreferrer"
+              className="flex-1 min-w-fit text-center rounded-lg bg-[#0A4A52] text-white px-4 py-2 text-sm font-medium">
+              🌊 Open Waves in Windy
+            </a>
+            <a href={windyWindUrl} target="_blank" rel="noreferrer"
+              className="flex-1 min-w-fit text-center rounded-lg bg-[#0A4A52] text-white px-4 py-2 text-sm font-medium">
+              💨 Open Wind Models in Windy
+            </a>
+          </div>
+          <p className="text-xs text-slate-500">Opens Windy.com — sign in for 14-day premium forecast and model comparison</p>
+
           <div className="rounded-lg border border-[#C4603A]/30 bg-[#FFF7F3] p-3 text-sm text-slate-700">
             Windy Premium mode: this embedded map can show tide-related overlays when available. For full tide tools tied to your Windy login, use the buttons below to open Windy directly.
           </div>
@@ -255,8 +400,8 @@ export default function Weather() {
               <button
                 key={loc.name}
                 type="button"
-                onClick={() => setLocation(loc)}
-                className={`px-3 py-2 rounded ${location.name === loc.name ? 'bg-[#0A4A52] text-white' : 'bg-teal-50 text-[#0A4A52]'}`}
+                onClick={() => { setLocation(loc); setGpsCoords(null); fetchConditionsAndForecast(loc.lat, loc.lon) }}
+                className={`px-3 py-2 rounded ${location.name === loc.name ? 'bg-[#C4603A] text-white' : 'bg-teal-50 text-[#0A4A52]'}`}
               >
                 {loc.name}
               </button>
@@ -293,90 +438,6 @@ export default function Weather() {
               </a>
             </div>
           ))}
-        </div>
-      )}
-
-      {subTab === 'tides' && (
-        <div className="space-y-3">
-          <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-lg p-3">
-            ⚓ Tidal information is critical for bar crossings. Always check your port before departure. Wide Bay Bar and Jumpinpin should only be crossed at or near High Water in calm conditions.
-          </div>
-          <button type="button" onClick={useNearest} className="px-4 py-2 bg-[#0A4A52] text-white rounded-lg">Tides Near Me</button>
-          {nearest ? <div className="text-sm text-slate-600">{nearest}</div> : null}
-
-          <div className="grid md:grid-cols-2 gap-2">
-            {TIDE_STATIONS.map((station) => (
-              <div
-                key={station.name}
-                className={`bg-white rounded-lg shadow border-l-4 p-3 ${tideStation.name === station.name ? 'border-l-[#C4603A]' : 'border-l-[#0A4A52]'}`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setTideStation(station)}
-                  className="text-left w-full font-medium text-slate-800"
-                >
-                  {station.name}
-                </button>
-                <div className="mt-2">
-                  <a
-                    href={windyStationUrl(station, 'tides')}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm text-[#C4603A] underline"
-                  >
-                    Open in Windy Tide View
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-white rounded-lg shadow border-t-4 border-[#0A4A52] p-4">
-            <div className="font-semibold text-[#0A4A52]">{tideStation.name} - Official Tide Sources</div>
-            <div className="text-sm text-slate-600 mt-2">
-              Synthetic tide estimates have been removed. Use the official providers below for operational tide windows and bar crossing planning.
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <a
-                href={windyStationUrl(tideStation, 'tides')}
-                target="_blank"
-                rel="noreferrer"
-                className="px-3 py-2 rounded bg-[#C4603A] text-white text-sm"
-              >
-                Open {tideStation.name} in Windy Tide View
-              </a>
-              <a
-                href={windyStationUrl(tideStation, 'currents')}
-                target="_blank"
-                rel="noreferrer"
-                className="px-3 py-2 rounded bg-[#0A4A52] text-white text-sm"
-              >
-                Open {tideStation.name} in Windy Currents
-              </a>
-              {TIDE_OFFICIAL_LINKS.map((source) => (
-                <a
-                  key={source.name}
-                  href={source.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-2 rounded bg-[#0A4A52] text-white text-sm"
-                >
-                  {source.name}
-                </a>
-              ))}
-            </div>
-            <div className="mt-4 rounded border border-slate-200 overflow-hidden">
-              <iframe
-                src="https://www.bom.gov.au/australia/tides/"
-                title="BOM Tide Predictions"
-                style={{ width: '100%', height: '560px', border: 'none' }}
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-              />
-            </div>
-            <div className="text-xs text-slate-500 mt-3">
-              If your station is not pre-selected, search for {tideStation.name} in the BOM tide page. Always verify final crossing times with local port notices.
-            </div>
-          </div>
         </div>
       )}
 

@@ -25,7 +25,7 @@ export const VESSEL_DEFAULTS = {
   cruisingArea: 'QLD Waters South of Noosa',
   cruiseSpeed: 12,
   fuelTankCapacityLitres: 2950,
-  estimatedBurnRateLitresPerHour: 60,
+  estimatedBurnRateLitresPerHour: 21,
   fuelTankConfig: {
     port: { name: 'Port Tank', capacityLitres: 1475, active: true, isBladder: false },
     starboard: {
@@ -67,10 +67,11 @@ export const VESSEL_DEFAULTS = {
   insurance_broker_phone: '(02) 9959 4422',
   insurance_email: 'enquiry@anchoragemarine.com.au',
   cruising_area: 'QLD Waters South of Noosa',
-  estimated_burn_rate_litres_per_hour: 60,
+  estimated_burn_rate_litres_per_hour: 21,
   cruise_speed_knots: 12,
   port_tank_capacity: 1475,
   stbd_tank_capacity: 1475,
+  trip_log_baseline_nm: 0,
   maintenance_warning_days: 30,
   safety_warning_days: 90,
   insurance_registration_warning_days: 60,

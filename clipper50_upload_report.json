@@ -1,0 +1,484 @@
+{
+  "bucket": "amaroo-photos",
+  "attempted": 83,
+  "uploaded_count": 68,
+  "skipped_count": 10,
+  "failed_count": 5,
+  "uploaded": [
+    {
+      "path": "2026 Haulout/Credit Card Authority Fillable.pdf",
+      "category": "Maintenance",
+      "file_name": "Credit Card Authority Fillable.pdf",
+      "size": 728656
+    },
+    {
+      "path": "2026 Haulout/GCCM/Site Map.png",
+      "category": "Maintenance",
+      "file_name": "Site Map.png",
+      "size": 441439
+    },
+    {
+      "path": "Beacon to Beacon/brisbaneandbremerriversbeacon.pdf",
+      "category": "Safety",
+      "file_name": "brisbaneandbremerriversbeacon.pdf",
+      "size": 4532705
+    },
+    {
+      "path": "Beacon to Beacon/capricorncoastbeacon.pdf",
+      "category": "Safety",
+      "file_name": "capricorncoastbeacon.pdf",
+      "size": 10177397
+    },
+    {
+      "path": "Beacon to Beacon/discoverycoast.pdf",
+      "category": "Safety",
+      "file_name": "discoverycoast.pdf",
+      "size": 10184855
+    },
+    {
+      "path": "Beacon to Beacon/gladstonebeacon.pdf",
+      "category": "Safety",
+      "file_name": "gladstonebeacon.pdf",
+      "size": 8310626
+    },
+    {
+      "path": "Beacon to Beacon/goldcoastbeaconnorthern.pdf",
+      "category": "Safety",
+      "file_name": "goldcoastbeaconnorthern.pdf",
+      "size": 10153330
+    },
+    {
+      "path": "Beacon to Beacon/greatsandystraitbeacon.pdf",
+      "category": "Safety",
+      "file_name": "greatsandystraitbeacon.pdf",
+      "size": 6994010
+    },
+    {
+      "path": "Beacon to Beacon/herveybaybeacon.pdf",
+      "category": "Safety",
+      "file_name": "herveybaybeacon.pdf",
+      "size": 7322738
+    },
+    {
+      "path": "Beacon to Beacon/moretonbaybeacon.pdf",
+      "category": "Safety",
+      "file_name": "moretonbaybeacon.pdf",
+      "size": 9820930
+    },
+    {
+      "path": "Beacon to Beacon/noosariverbeacon.pdf",
+      "category": "Safety",
+      "file_name": "noosariverbeacon.pdf",
+      "size": 5605683
+    },
+    {
+      "path": "Beacon to Beacon/pumicestonebeacon.pdf",
+      "category": "Safety",
+      "file_name": "pumicestonebeacon.pdf",
+      "size": 5582552
+    },
+    {
+      "path": "Beacon to Beacon/southerngoldcoastbeacon.pdf",
+      "category": "Safety",
+      "file_name": "southerngoldcoastbeacon.pdf",
+      "size": 2775755
+    },
+    {
+      "path": "Beacon to Beacon/southernmoretonbaybeacon.pdf",
+      "category": "Safety",
+      "file_name": "southernmoretonbaybeacon.pdf",
+      "size": 9130718
+    },
+    {
+      "path": "Beacon to Beacon/sunshinecoastbeacon.pdf",
+      "category": "Safety",
+      "file_name": "sunshinecoastbeacon.pdf",
+      "size": 5458238
+    },
+    {
+      "path": "Beacon to Beacon/thenarrowsbeacon.pdf",
+      "category": "Safety",
+      "file_name": "thenarrowsbeacon.pdf",
+      "size": 10251315
+    },
+    {
+      "path": "Calculators/Amaroo Master File.xlsx",
+      "category": "Maintenance",
+      "file_name": "Amaroo Master File.xlsx",
+      "size": 171366
+    },
+    {
+      "path": "Calculators/Departure Times 2025.xlsx",
+      "category": "Weather & Tides",
+      "file_name": "Departure Times 2025.xlsx",
+      "size": 49226
+    },
+    {
+      "path": "Calculators/Fuel Calculator.xlsx",
+      "category": "Maintenance",
+      "file_name": "Fuel Calculator.xlsx",
+      "size": 104292
+    },
+    {
+      "path": "Calculators/Test Book.xlsm",
+      "category": "Maintenance",
+      "file_name": "Test Book.xlsm",
+      "size": 16795
+    },
+    {
+      "path": "Calculators/Test Book.xlsx",
+      "category": "Maintenance",
+      "file_name": "Test Book.xlsx",
+      "size": 16722
+    },
+    {
+      "path": "Calculators/Tide Calculator.xlsm",
+      "category": "Maintenance",
+      "file_name": "Tide Calculator.xlsm",
+      "size": 62435
+    },
+    {
+      "path": "Calculators/Tide Height Calculator.xlsm",
+      "category": "Maintenance",
+      "file_name": "Tide Height Calculator.xlsm",
+      "size": 2621336
+    },
+    {
+      "path": "Calculators/Tide Height Calculator.xlsx",
+      "category": "Maintenance",
+      "file_name": "Tide Height Calculator.xlsx",
+      "size": 35214
+    },
+    {
+      "path": "Insurance/AM024374 - Certificate of Currency 05.03.2026.pdf",
+      "category": "Insurance",
+      "file_name": "AM024374 - Certificate of Currency 05.03.2026.pdf",
+      "size": 623633
+    },
+    {
+      "path": "Insurance/AM024374 - McDonald - Certificate of Currency 2025-26 - inc Nav_001670.pdf",
+      "category": "Insurance",
+      "file_name": "AM024374 - McDonald - Certificate of Currency 2025-26 - inc Nav_001670.pdf",
+      "size": 580642
+    },
+    {
+      "path": "Insurance/AMU000697 Certificate of Currency 20.05.2025.pdf",
+      "category": "Insurance",
+      "file_name": "AMU000697 Certificate of Currency 20.05.2025.pdf",
+      "size": 112299
+    },
+    {
+      "path": "Insurance/Equipment list and values.docx",
+      "category": "Insurance",
+      "file_name": "Equipment list and values.docx",
+      "size": 25065
+    },
+    {
+      "path": "Insurance/Equipment list and values.pdf",
+      "category": "Insurance",
+      "file_name": "Equipment list and values.pdf",
+      "size": 41851
+    },
+    {
+      "path": "Insurance/Invoice_STUARTMCDO_P603789024_3.pdf",
+      "category": "Insurance",
+      "file_name": "Invoice_STUARTMCDO_P603789024_3.pdf",
+      "size": 246269
+    },
+    {
+      "path": "Insurance/Payment_Receipt_STUARTMCDO_P603789024_1.pdf",
+      "category": "Insurance",
+      "file_name": "Payment_Receipt_STUARTMCDO_P603789024_1.pdf",
+      "size": 192448
+    },
+    {
+      "path": "Insurance/Policy_Documents_STUARTMCDO_P603789024_3.pdf",
+      "category": "Insurance",
+      "file_name": "Policy_Documents_STUARTMCDO_P603789024_3.pdf",
+      "size": 191882
+    },
+    {
+      "path": "Insurance/ProposalForm (002).pdf",
+      "category": "Insurance",
+      "file_name": "ProposalForm (002).pdf",
+      "size": 1074298
+    },
+    {
+      "path": "Insurance/ProposalForm Signed.pdf",
+      "category": "Insurance",
+      "file_name": "ProposalForm Signed.pdf",
+      "size": 1224696
+    },
+    {
+      "path": "Insurance/QM552-1123 Marine Hull (Anchorage) (web) 12.2023.pdf",
+      "category": "Insurance",
+      "file_name": "QM552-1123 Marine Hull (Anchorage) (web) 12.2023.pdf",
+      "size": 1324463
+    },
+    {
+      "path": "Insurance/Quote_Documents_STUARTMCDO_P603789024_0.pdf",
+      "category": "Insurance",
+      "file_name": "Quote_Documents_STUARTMCDO_P603789024_0.pdf",
+      "size": 1910013
+    },
+    {
+      "path": "Manuals/QHT_Control_Manual.pdf",
+      "category": "Manual",
+      "file_name": "QHT_Control_Manual.pdf",
+      "size": 308136
+    },
+    {
+      "path": "Pictures/Out of water shots/PXL_20250430_231625711.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20250430_231625711.MP.jpg",
+      "size": 5744656
+    },
+    {
+      "path": "Pictures/Out of water shots/PXL_20250430_231629681.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20250430_231629681.MP.jpg",
+      "size": 4343794
+    },
+    {
+      "path": "Pictures/Out of water shots/PXL_20250430_231639762.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20250430_231639762.MP.jpg",
+      "size": 4861876
+    },
+    {
+      "path": "Pictures/Out of water shots/PXL_20250430_233033337.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20250430_233033337.MP.jpg",
+      "size": 4165962
+    },
+    {
+      "path": "Pictures/Out of water shots/PXL_20250430_233048400.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20250430_233048400.MP.jpg",
+      "size": 3205230
+    },
+    {
+      "path": "Pictures/Out of water shots/PXL_20250501_002234763.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20250501_002234763.MP.jpg",
+      "size": 4483699
+    },
+    {
+      "path": "Pictures/Out of water shots/PXL_20250501_002242639.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20250501_002242639.MP.jpg",
+      "size": 4830270
+    },
+    {
+      "path": "Pictures/Out of water shots/PXL_20250501_002311779.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20250501_002311779.MP.jpg",
+      "size": 5949411
+    },
+    {
+      "path": "Pictures/Out of water shots/Screenshot 2025-11-17 072641.jpg",
+      "category": "Maintenance",
+      "file_name": "Screenshot 2025-11-17 072641.jpg",
+      "size": 27761
+    },
+    {
+      "path": "Pictures/Stabiliser/Photos-1-001/PXL_20251116_221105075.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20251116_221105075.MP.jpg",
+      "size": 3855460
+    },
+    {
+      "path": "Pictures/Stabiliser/Photos-1-001/PXL_20251116_221409870.MP.jpg",
+      "category": "Maintenance",
+      "file_name": "PXL_20251116_221409870.MP.jpg",
+      "size": 6774079
+    },
+    {
+      "path": "Purchase/Bill of Sale.pdf",
+      "category": "Admin",
+      "file_name": "Bill of Sale.pdf",
+      "size": 88884
+    },
+    {
+      "path": "Purchase/Deposit part 1.pdf",
+      "category": "Admin",
+      "file_name": "Deposit part 1.pdf",
+      "size": 33994
+    },
+    {
+      "path": "Purchase/Final Purchase Agreement.pdf",
+      "category": "Admin",
+      "file_name": "Final Purchase Agreement.pdf",
+      "size": 1115687
+    },
+    {
+      "path": "Purchase/Licence Scan.pdf",
+      "category": "Admin",
+      "file_name": "Licence Scan.pdf",
+      "size": 206202
+    },
+    {
+      "path": "Purchase/PPSR Search Certificate 0934940683770001.pdf",
+      "category": "Admin",
+      "file_name": "PPSR Search Certificate 0934940683770001.pdf",
+      "size": 162860
+    },
+    {
+      "path": "Purchase/Registration - QLD.pdf",
+      "category": "Registration",
+      "file_name": "Registration - QLD.pdf",
+      "size": 101115
+    },
+    {
+      "path": "Purchase/Sales contract.pdf",
+      "category": "Admin",
+      "file_name": "Sales contract.pdf",
+      "size": 4142675
+    },
+    {
+      "path": "Purchase/Spec list original boat.docx",
+      "category": "Admin",
+      "file_name": "Spec list original boat.docx",
+      "size": 26902
+    },
+    {
+      "path": "Purchase/Spectrum 2nd Deposit.pdf",
+      "category": "Admin",
+      "file_name": "Spectrum 2nd Deposit.pdf",
+      "size": 31421
+    },
+    {
+      "path": "Radio Course/Your payment to Above and Beyond Boating Pty Ltd.msg",
+      "category": "Safety",
+      "file_name": "Your payment to Above and Beyond Boating Pty Ltd.msg",
+      "size": 75776
+    },
+    {
+      "path": "Registration/15m Endorsement Letter - Stuart James McDonald.pdf",
+      "category": "Registration",
+      "file_name": "15m Endorsement Letter - Stuart James McDonald.pdf",
+      "size": 57486
+    },
+    {
+      "path": "Registration/amsaform-89_0.pdf",
+      "category": "Registration",
+      "file_name": "amsaform-89_0.pdf",
+      "size": 222029
+    },
+    {
+      "path": "Registration/F3525_CFD.pdf",
+      "category": "Registration",
+      "file_name": "F3525_CFD.pdf",
+      "size": 1276793
+    },
+    {
+      "path": "Registration/Registration_Certificate_BZI70Q_250530.pdf",
+      "category": "Registration",
+      "file_name": "Registration_Certificate_BZI70Q_250530.pdf",
+      "size": 134727
+    },
+    {
+      "path": "Repairs/Initial repairs estimate.pdf",
+      "category": "Maintenance",
+      "file_name": "Initial repairs estimate.pdf",
+      "size": 993286
+    },
+    {
+      "path": "Safety/41310.pdf",
+      "category": "Safety",
+      "file_name": "41310.pdf",
+      "size": 196810
+    },
+    {
+      "path": "Safety/41310A.pdf",
+      "category": "Safety",
+      "file_name": "41310A.pdf",
+      "size": 330102
+    },
+    {
+      "path": "Safety/amsaform-89_0-RECENT VHF DSC Handheld.pdf",
+      "category": "Safety",
+      "file_name": "amsaform-89_0-RECENT VHF DSC Handheld.pdf",
+      "size": 220257
+    },
+    {
+      "path": "Safety/amsaform-89_0.pdf",
+      "category": "Safety",
+      "file_name": "amsaform-89_0.pdf",
+      "size": 222022
+    },
+    {
+      "path": "Safety/Invoice MSA41310.pdf",
+      "category": "Safety",
+      "file_name": "Invoice MSA41310.pdf",
+      "size": 160399
+    }
+  ],
+  "skipped": [
+    {
+      "path": "Radio Course/Emergency Action Card - V4 (Apr 20) (1).pdf",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/Handbook.pdf",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/Lesson 1.1 - Introduction to VHF.ppsx",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/MMSI Submission Confirmation - Stuart McDonald.msg",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/Phonetic Alphabet (NATO Version).pdf",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/Radio Licence.pdf",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/Receipt_WR01444288.pdf",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/Summary Notes.docx",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/Summary Sticker.docx",
+      "reason": "already exists (file_name + file_size)"
+    },
+    {
+      "path": "Radio Course/VHF channels V3.pdf",
+      "reason": "already exists (file_name + file_size)"
+    }
+  ],
+  "failed": [
+    {
+      "path": "Calculators/Departure Times 2025.xlsm",
+      "reason": "HTTP 400",
+      "detail": "{\"statusCode\":\"413\",\"error\":\"Payload too large\",\"message\":\"The object exceeded the maximum allowed size\"}"
+    },
+    {
+      "path": "Manuals/29694-MPPT_solar_charger_manual-pdf-en.pdf",
+      "reason": "HTTP 400",
+      "detail": "{\"statusCode\":\"413\",\"error\":\"Payload too large\",\"message\":\"The object exceeded the maximum allowed size\"}"
+    },
+    {
+      "path": "Manuals/LightHouse2 (Release 19) Multifunction display Operation instructions 81360-5-EN.pdf",
+      "reason": "HTTP 400",
+      "detail": "{\"statusCode\":\"413\",\"error\":\"Payload too large\",\"message\":\"The object exceeded the maximum allowed size\"}"
+    },
+    {
+      "path": "Operations Manual/Amaroo_Operations_Manual_v1.0.docx",
+      "reason": "[Errno 13] Permission denied: 'D:\\\\OneDrive - Bosun Pty Ltd\\\\Documents - Bosun\\\\Boating 2025\\\\Clipper 50\\\\Operations Manual\\\\Amaroo_Operations_Manual_v1.0.docx'"
+    },
+    {
+      "path": "Operations Manual/files/Amaroo_Missing_Information_Summary.docx",
+      "reason": "[Errno 13] Permission denied: 'D:\\\\OneDrive - Bosun Pty Ltd\\\\Documents - Bosun\\\\Boating 2025\\\\Clipper 50\\\\Operations Manual\\\\files\\\\Amaroo_Missing_Information_Summary.docx'"
+    }
+  ]
+}

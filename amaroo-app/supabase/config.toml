@@ -1,0 +1,2 @@
+[functions.get-ocean-current]
+verify_jwt = false
