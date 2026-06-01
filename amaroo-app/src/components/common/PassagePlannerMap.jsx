@@ -103,8 +103,7 @@ function LayerControl({ baseLayer, setBaseLayer, overlays, setOverlays, applyPre
         <div style={{ fontWeight: 700, marginBottom: 4, color: '#222', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Base layer</div>
         {[
           { key: 'osm', label: 'Street map' },
-          { key: 'satellite', label: 'Satellite' },
-          { key: 'google', label: 'Google Earth satellite' },
+          { key: 'satellite', label: 'Satellite (Google)' },
           { key: 'bathy', label: 'Bathymetry base' },
         ].map(({ key, label }) => (
           <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', marginBottom: 3, color: '#333' }}>
@@ -353,7 +352,7 @@ export default function PassagePlannerMap({ waypoints, onMapClick, onWaypointDra
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }} className="map-fullscreen-container">
-      {baseLayer === 'google' ? (
+      {(baseLayer === 'google' || baseLayer === 'satellite') ? (
         <>
           {!googleApiKey ? (
             <div style={{ height: isFullscreen ? '100dvh' : '400px', display: 'grid', placeItems: 'center', background: '#0b1720', color: '#e2e8f0', padding: 16, textAlign: 'center' }}>
@@ -391,12 +390,6 @@ export default function PassagePlannerMap({ waypoints, onMapClick, onWaypointDra
         <TileLayer
           url={`https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIA_API_KEY}`}
           attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          maxZoom={20}
-        />
-      ) : baseLayer === 'satellite' ? (
-        <TileLayer
-          url={`https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg?api_key=${import.meta.env.VITE_STADIA_API_KEY}`}
-          attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CNES, Distribution Airbus DS, &copy; Airbus DS, &copy; PlanetObserver'
           maxZoom={20}
         />
       ) : (

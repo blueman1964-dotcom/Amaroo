@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Circle, CircleMarker, MapContainer, Polyline, TileLayer, useMap } from 'react-leaflet'
+import { Circle, GoogleMap, MarkerF, PolylineF, useJsApiLoader } from '@react-google-maps/api'
 import { useGPS } from '../hooks/useGPS'
 import { getVesselSettings, upsertVesselSettingsBulk } from '../db/api'
 
@@ -49,135 +49,87 @@ function formatLatLng(p) {
   return `${lat}, ${lng}`
 }
 
-// Re-fits the map whenever the anchorPoint object reference changes (e.g. Reset Anchor).
-function AnchorMapUpdater({ anchorPoint, position, radius }) {
-  const map = useMap()
-  const prevAnchorRef = useRef(null)
+function AnchorMap({ anchorPoint, position, positionHistory, radius, insideRadius }) {
+  const [mapType, setMapType] = useState('satellite')
+  const mapRef = useRef(null)
+  const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+  const { isLoaded } = useJsApiLoader({ id: 'amaroo-google-maps', googleMapsApiKey: googleApiKey })
 
+  const prevAnchorRef = useRef(null)
   useEffect(() => {
-    if (!anchorPoint) return
+    if (!mapRef.current || !anchorPoint || !window.google?.maps) return
     if (prevAnchorRef.current === anchorPoint) return
     prevAnchorRef.current = anchorPoint
+    const bounds = new window.google.maps.LatLngBounds()
+    bounds.extend({ lat: anchorPoint.lat, lng: anchorPoint.lng })
+    if (position) bounds.extend({ lat: position.lat, lng: position.lng })
+    mapRef.current.fitBounds(bounds, 60)
+  }, [anchorPoint, position])
 
-    const padDeg = Math.max((Number(radius) / 111_320) * 2.5, 0.001)
-    const lats = [anchorPoint.lat]
-    const lngs = [anchorPoint.lng]
-    if (position) { lats.push(position.lat); lngs.push(position.lng) }
+  const center = anchorPoint || position || { lat: -27.524, lng: 153.43 }
+  const trailPath = positionHistory.map((p) => ({ lat: p.lat, lng: p.lng }))
+  const radiusColour = insideRadius ? '#16A34A' : '#DC2626'
 
-    map.fitBounds(
-      [
-        [Math.min(...lats) - padDeg, Math.min(...lngs) - padDeg],
-        [Math.max(...lats) + padDeg, Math.max(...lngs) + padDeg],
-      ],
-      { maxZoom: 18, padding: [30, 30] },
+  if (!isLoaded) {
+    return (
+      <div className="rounded-lg bg-slate-100 border border-slate-200" style={{ height: 320, display: 'grid', placeItems: 'center' }}>
+        <span className="text-sm text-slate-500">Loading map…</span>
+      </div>
     )
-  }, [anchorPoint, position, radius, map])
-
-  return null
-}
-
-function AnchorMap({ anchorPoint, position, positionHistory, radius, insideRadius }) {
-  const [baseLayer, setBaseLayer] = useState('satellite')
-
-  const center = anchorPoint
-    ? [anchorPoint.lat, anchorPoint.lng]
-    : position
-      ? [position.lat, position.lng]
-      : [-27.524, 153.43]
-
-  const trailPositions = positionHistory.map((p) => [p.lat, p.lng])
+  }
 
   return (
     <div className="relative rounded-lg overflow-hidden border border-slate-200" style={{ height: 320 }}>
-      <MapContainer center={center} zoom={16} style={{ height: '100%', width: '100%' }} zoomControl>
-        {baseLayer === 'osm' ? (
-          <TileLayer
-            url={`https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIA_API_KEY}`}
-            attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            maxZoom={20}
-          />
-        ) : (
-          <TileLayer
-            url={`https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg?api_key=${import.meta.env.VITE_STADIA_API_KEY}`}
-            attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; CNES, Distribution Airbus DS'
-            maxZoom={20}
-          />
-        )}
-
-        {/* Nautical seamarks */}
-        <TileLayer
-          url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="http://www.openseamap.org">OpenSeaMap</a>'
-          maxZoom={18}
-          opacity={0.7}
-        />
-
-        {/* Drag radius circle */}
+      <GoogleMap
+        mapContainerStyle={{ height: '100%', width: '100%' }}
+        center={{ lat: center.lat, lng: center.lng }}
+        zoom={16}
+        mapTypeId={mapType}
+        options={{ disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
+        onLoad={(map) => { mapRef.current = map }}
+      >
         {anchorPoint && (
           <Circle
-            center={[anchorPoint.lat, anchorPoint.lng]}
+            center={{ lat: anchorPoint.lat, lng: anchorPoint.lng }}
             radius={Number(radius)}
-            pathOptions={{
-              color: insideRadius ? '#16A34A' : '#DC2626',
-              fillColor: insideRadius ? '#16A34A' : '#DC2626',
-              fillOpacity: 0.08,
-              weight: 2.5,
-            }}
+            options={{ strokeColor: radiusColour, strokeWeight: 2.5, strokeOpacity: 0.9, fillColor: radiusColour, fillOpacity: 0.08 }}
           />
         )}
-
-        {/* Anchor marker */}
-        {anchorPoint && (
-          <CircleMarker
-            center={[anchorPoint.lat, anchorPoint.lng]}
-            radius={7}
-            pathOptions={{ color: '#92400E', fillColor: '#B45309', fillOpacity: 1, weight: 2 }}
+        {trailPath.length > 1 && (
+          <PolylineF
+            path={trailPath}
+            options={{ strokeColor: '#3B82F6', strokeWeight: 2, strokeOpacity: 0.6 }}
           />
         )}
-
-        {/* Vessel trail */}
-        {trailPositions.length > 1 && (
-          <Polyline
-            positions={trailPositions}
-            pathOptions={{ color: '#3B82F6', weight: 2, opacity: 0.55 }}
+        {anchorPoint && window.google?.maps && (
+          <MarkerF
+            position={{ lat: anchorPoint.lat, lng: anchorPoint.lng }}
+            icon={{ path: window.google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#B45309', fillOpacity: 1, strokeColor: '#92400E', strokeWeight: 2 }}
+            title="Anchor"
           />
         )}
-        {trailPositions.map((p, i) => (
-          <CircleMarker
-            key={i}
-            center={p}
-            radius={2}
-            pathOptions={{ color: '#3B82F6', fillColor: '#3B82F6', fillOpacity: 0.5, weight: 0 }}
-          />
-        ))}
-
-        {/* Current vessel position */}
-        {position && (
-          <CircleMarker
-            center={[position.lat, position.lng]}
-            radius={8}
-            pathOptions={{ color: '#1D4ED8', fillColor: '#3B82F6', fillOpacity: 1, weight: 2 }}
+        {position && window.google?.maps && (
+          <MarkerF
+            position={{ lat: position.lat, lng: position.lng }}
+            icon={{ path: window.google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#3B82F6', fillOpacity: 1, strokeColor: '#1D4ED8', strokeWeight: 2 }}
+            title="Vessel"
           />
         )}
+      </GoogleMap>
 
-        <AnchorMapUpdater anchorPoint={anchorPoint} position={position} radius={radius} />
-      </MapContainer>
-
-      {/* Layer toggle */}
       <div className="absolute top-2 right-2 z-[1000] flex gap-1">
-        {[{ key: 'satellite', label: 'Satellite' }, { key: 'osm', label: 'Map' }].map(({ key, label }) => (
+        {[{ key: 'satellite', label: 'Satellite' }, { key: 'roadmap', label: 'Map' }].map(({ key, label }) => (
           <button
             key={key}
             type="button"
-            onClick={() => setBaseLayer(key)}
-            className={`rounded px-2 py-1 text-xs font-medium shadow ${baseLayer === key ? 'bg-[#0A4A52] text-white' : 'bg-white text-slate-700 border border-slate-300'}`}
+            onClick={() => setMapType(key)}
+            className={`rounded px-2 py-1 text-xs font-medium shadow ${mapType === key ? 'bg-[#0A4A52] text-white' : 'bg-white text-slate-700 border border-slate-300'}`}
           >
             {label}
           </button>
         ))}
       </div>
 
-      {/* Legend */}
       <div className="absolute bottom-6 left-2 z-[1000] bg-white/90 rounded px-2 py-1 text-xs space-y-0.5 pointer-events-none">
         <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-blue-500" /> Vessel</div>
         <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-amber-600" /> Anchor</div>
