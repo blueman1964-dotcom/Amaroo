@@ -395,9 +395,9 @@ export default function PassagePlannerMap({ waypoints, onMapClick, onWaypointDra
         />
       ) : baseLayer === 'satellite' ? (
         <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution="Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics"
-          maxZoom={19}
+          url={`https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg?api_key=${import.meta.env.VITE_STADIA_API_KEY}`}
+          attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CNES, Distribution Airbus DS, &copy; Airbus DS, &copy; PlanetObserver'
+          maxZoom={20}
         />
       ) : (
         <TileLayer

@@ -98,9 +98,9 @@ function AnchorMap({ anchorPoint, position, positionHistory, radius, insideRadiu
           />
         ) : (
           <TileLayer
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            attribution="Tiles &copy; Esri"
-            maxZoom={19}
+            url={`https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg?api_key=${import.meta.env.VITE_STADIA_API_KEY}`}
+            attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; CNES, Distribution Airbus DS'
+            maxZoom={20}
           />
         )}
 
@@ -485,8 +485,18 @@ export default function AnchorWatch() {
       </div>
 
       {isRemoteClient && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-          📡 Boat position is synced from onboard tablet. This device is in read-only monitor mode.
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 space-y-2">
+          <div>📡 Boat position is synced from onboard tablet. This device is in read-only monitor mode.</div>
+          <button
+            type="button"
+            onClick={() => {
+              upsertVesselSettingsBulk({ [SYNC_KEYS.masterDeviceId]: deviceId }).catch(() => {})
+              setMasterDeviceId(deviceId)
+            }}
+            className="rounded bg-[#0A4A52] text-white px-2 py-1 text-xs font-medium"
+          >
+            This is the onboard tablet — take control
+          </button>
         </div>
       )}
 
