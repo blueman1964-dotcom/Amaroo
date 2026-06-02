@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, Popup, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { GoogleMap, MarkerF, PolylineF, useJsApiLoader } from '@react-google-maps/api'
+import { GoogleMap, InfoWindow, MarkerF, PolylineF, useJsApiLoader } from '@react-google-maps/api'
 import { useGPS } from '../../hooks/useGPS'
+import { useAIS } from '../../hooks/useAIS'
 import AISLayer from '../AISLayer'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
@@ -186,8 +187,62 @@ function FullscreenButton({ isFullscreen, onToggle, containerRef, nonLeaflet = f
   )
 }
 
-function GoogleSatelliteMap({ waypoints, onMapClick, onWaypointDrag, isFullscreen, position }) {
+function roundBound(v) { return Math.round(v * 10) / 10 }
+
+function aisShipColor(t) {
+  if (t == null) return '#6b7280'
+  if (t >= 60 && t <= 69) return '#7c3aed'
+  if (t >= 70 && t <= 79) return '#b45309'
+  if (t >= 80 && t <= 89) return '#dc2626'
+  if (t >= 30 && t <= 32) return '#0369a1'
+  return '#0A4A52'
+}
+
+function makeAISSvgUrl(vessel) {
+  const cog = vessel.cog ?? vessel.heading ?? 0
+  const color = aisShipColor(vessel.shipType)
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><g transform="rotate(${cog},10,10)"><polygon points="10,2 14,16 10,13 6,16" fill="${color}" stroke="white" stroke-width="1.5"/></g></svg>`
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+}
+
+function GoogleSatelliteMap({ waypoints, onMapClick, onWaypointDrag, isFullscreen, position, seamarkEnabled, seamarkOpacity, aisEnabled }) {
   const mapRef = useRef(null)
+  const [activeVessel, setActiveVessel] = useState(null)
+  const [mapBounds, setMapBounds] = useState(null)
+  const boundsDebounceRef = useRef(null)
+
+  const south = mapBounds ? roundBound(Math.min(mapBounds.south - 0.5, mapBounds.clat - 1.5)) : null
+  const west  = mapBounds ? roundBound(Math.min(mapBounds.west  - 0.5, mapBounds.clng - 1.5)) : null
+  const north = mapBounds ? roundBound(Math.max(mapBounds.north + 0.5, mapBounds.clat + 1.5)) : null
+  const east  = mapBounds ? roundBound(Math.max(mapBounds.east  + 0.5, mapBounds.clng + 1.5)) : null
+  const { vessels, connected, error: aisError } = useAIS({ enabled: aisEnabled, south, west, north, east })
+
+  const updateBounds = () => {
+    if (!mapRef.current) return
+    clearTimeout(boundsDebounceRef.current)
+    boundsDebounceRef.current = setTimeout(() => {
+      const b = mapRef.current.getBounds()
+      if (!b) return
+      setMapBounds({ south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast(), clat: b.getCenter().lat(), clng: b.getCenter().lng() })
+    }, 1500)
+  }
+
+  const applySeamark = (map) => {
+    map.overlayMapTypes.clear()
+    if (seamarkEnabled) {
+      map.overlayMapTypes.insertAt(0, new window.google.maps.ImageMapType({
+        getTileUrl: (coord, zoom) => `https://tiles.openseamap.org/seamark/${zoom}/${coord.x}/${coord.y}.png`,
+        tileSize: new window.google.maps.Size(256, 256),
+        name: 'OpenSeaMap',
+        opacity: seamarkOpacity ?? 0.75,
+        maxZoom: 18,
+      }))
+    }
+  }
+
+  useEffect(() => {
+    if (mapRef.current) applySeamark(mapRef.current)
+  }, [seamarkEnabled, seamarkOpacity])
 
   const initialCenter = waypoints[0]
     ? { lat: waypoints[0].lat, lng: waypoints[0].lng }
@@ -214,63 +269,100 @@ function GoogleSatelliteMap({ waypoints, onMapClick, onWaypointDrag, isFullscree
     return () => clearTimeout(t)
   }, [isFullscreen])
 
+  const aisIconSize = window.google?.maps ? new window.google.maps.Size(20, 20) : null
+  const aisIconAnchor = window.google?.maps ? new window.google.maps.Point(10, 10) : null
+
   return (
-    <GoogleMap
-      mapContainerStyle={{ width: '100%', height: isFullscreen ? '100dvh' : '400px' }}
-      center={initialCenter}
-      zoom={10}
-      onLoad={(map) => {
-        mapRef.current = map
-        fitRoute()
-      }}
-      onClick={(e) => {
-        if (!onMapClick || !e.latLng) return
-        onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() })
-      }}
-      options={{
-        mapTypeId: 'satellite',
-        streetViewControl: false,
-        mapTypeControl: false,
-        fullscreenControl: false,
-      }}
-    >
-      {waypoints.map((point, index) => {
-        const isStart = index === 0
-        const isEnd = index === waypoints.length - 1 && waypoints.length > 1
-        const label = isStart ? 'S' : isEnd ? 'E' : String(index)
-        return (
+    <div style={{ position: 'relative' }}>
+      <GoogleMap
+        mapContainerStyle={{ width: '100%', height: isFullscreen ? '100dvh' : '400px' }}
+        center={initialCenter}
+        zoom={10}
+        onLoad={(map) => {
+          mapRef.current = map
+          applySeamark(map)
+          updateBounds()
+          fitRoute()
+        }}
+        onBoundsChanged={updateBounds}
+        onClick={(e) => {
+          setActiveVessel(null)
+          if (!onMapClick || !e.latLng) return
+          onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+        }}
+        options={{
+          mapTypeId: 'satellite',
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+        }}
+      >
+        {waypoints.map((point, index) => {
+          const isStart = index === 0
+          const isEnd = index === waypoints.length - 1 && waypoints.length > 1
+          const label = isStart ? 'S' : isEnd ? 'E' : String(index)
+          return (
+            <MarkerF
+              key={point.id || `${point.lat}-${point.lng}-${index}`}
+              position={{ lat: point.lat, lng: point.lng }}
+              draggable={!!onWaypointDrag}
+              label={{ text: label, color: '#fff', fontWeight: 'bold' }}
+              onDragEnd={(ev) => {
+                if (!onWaypointDrag || !ev.latLng) return
+                onWaypointDrag(index, { lat: ev.latLng.lat(), lng: ev.latLng.lng() })
+              }}
+            />
+          )
+        })}
+        {waypoints.length >= 2 && (
+          <PolylineF
+            path={waypoints.map((w) => ({ lat: w.lat, lng: w.lng }))}
+            options={{ strokeColor: '#0A4A52', strokeWeight: 3, strokeOpacity: 0.95 }}
+          />
+        )}
+        {position && (
           <MarkerF
-            key={point.id || `${point.lat}-${point.lng}-${index}`}
-            position={{ lat: point.lat, lng: point.lng }}
-            draggable={!!onWaypointDrag}
-            label={{ text: label, color: '#fff', fontWeight: 'bold' }}
-            onDragEnd={(ev) => {
-              if (!onWaypointDrag || !ev.latLng) return
-              onWaypointDrag(index, { lat: ev.latLng.lat(), lng: ev.latLng.lng() })
+            position={{ lat: position.lat, lng: position.lng }}
+            icon={{
+              path: window.google?.maps.SymbolPath.CIRCLE,
+              scale: 7,
+              fillColor: '#3b82f6',
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2,
             }}
           />
-        )
-      })}
-      {waypoints.length >= 2 && (
-        <PolylineF
-          path={waypoints.map((w) => ({ lat: w.lat, lng: w.lng }))}
-          options={{ strokeColor: '#0A4A52', strokeWeight: 3, strokeOpacity: 0.95 }}
-        />
+        )}
+        {aisEnabled && vessels.map((v) => (
+          <MarkerF
+            key={v.mmsi}
+            position={{ lat: v.lat, lng: v.lng }}
+            icon={{ url: makeAISSvgUrl(v), scaledSize: aisIconSize, anchor: aisIconAnchor }}
+            onClick={() => setActiveVessel(v.mmsi === activeVessel ? null : v.mmsi)}
+          />
+        ))}
+        {aisEnabled && activeVessel && (() => {
+          const v = vessels.find(x => x.mmsi === activeVessel)
+          if (!v) return null
+          return (
+            <InfoWindow position={{ lat: v.lat, lng: v.lng }} onCloseClick={() => setActiveVessel(null)}>
+              <div style={{ fontSize: 12, minWidth: 140 }}>
+                <div style={{ fontWeight: 700, marginBottom: 2 }}>{v.name}</div>
+                <div style={{ color: '#64748b' }}>MMSI: {v.mmsi}</div>
+                {v.sog != null && <div>SOG: {v.sog.toFixed(1)} kn</div>}
+                {v.cog != null && <div>COG: {Math.round(v.cog)}°</div>}
+                {v.length > 0 && <div>Length: {v.length} m</div>}
+              </div>
+            </InfoWindow>
+          )
+        })()}
+      </GoogleMap>
+      {aisEnabled && (
+        <div style={{ position: 'absolute', bottom: 24, left: 8, zIndex: 10, background: connected ? '#16a34a' : aisError ? '#dc2626' : '#6b7280', color: 'white', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600, pointerEvents: 'none' }}>
+          {connected ? `AIS ● ${vessels.length} vessel${vessels.length !== 1 ? 's' : ''}` : aisError ? `AIS: ${aisError}` : 'AIS connecting…'}
+        </div>
       )}
-      {position && (
-        <MarkerF
-          position={{ lat: position.lat, lng: position.lng }}
-          icon={{
-            path: window.google?.maps.SymbolPath.CIRCLE,
-            scale: 7,
-            fillColor: '#3b82f6',
-            fillOpacity: 1,
-            strokeColor: '#ffffff',
-            strokeWeight: 2,
-          }}
-        />
-      )}
-    </GoogleMap>
+    </div>
   )
 }
 
@@ -372,6 +464,9 @@ export default function PassagePlannerMap({ waypoints, onMapClick, onWaypointDra
               onWaypointDrag={onWaypointDrag}
               isFullscreen={isFullscreen}
               position={position}
+              seamarkEnabled={overlays.seamark.enabled}
+              seamarkOpacity={overlays.seamark.opacity}
+              aisEnabled={overlays.ais?.enabled ?? false}
             />
           ) : (
             <div style={{ height: isFullscreen ? '100dvh' : '400px', display: 'grid', placeItems: 'center', background: '#0b1720', color: '#e2e8f0' }}>

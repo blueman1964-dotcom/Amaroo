@@ -620,58 +620,100 @@ Include everything: proteins, vegetables, liquids, sauces, spices, oils, condime
   return parseAIJson(data.content[0].text)
 }
 
-// ── AI: shopping list ──────────────────────────────────────────────────────
+// ── Shopping list: deterministic gap analysis ──────────────────────────────
+// Convert any quantity+unit to a common base (g or ml) for comparison.
+// Count-based units (cans, pieces, etc.) are left as-is.
+function normalizeToBase(quantity, unit) {
+  const q = Number(quantity) || 0
+  const u = (unit || '').toLowerCase().trim()
+  if (u === 'kg') return { qty: q * 1000, baseUnit: 'g' }
+  if (u === 'g' || u === 'gram' || u === 'grams') return { qty: q, baseUnit: 'g' }
+  if (u === 'l' || u === 'litre' || u === 'liter' || u === 'litres' || u === 'liters') return { qty: q * 1000, baseUnit: 'ml' }
+  if (u === 'ml') return { qty: q, baseUnit: 'ml' }
+  if (u === 'tbsp' || u === 'tablespoon' || u === 'tablespoons') return { qty: q * 15, baseUnit: 'ml' }
+  if (u === 'tsp' || u === 'teaspoon' || u === 'teaspoons') return { qty: q * 5, baseUnit: 'ml' }
+  return { qty: q, baseUnit: u }
+}
+
+function denormalizeGap(gapInBase, baseUnit, targetUnit) {
+  const u = (targetUnit || '').toLowerCase().trim()
+  if (baseUnit === 'g' && u === 'kg') return gapInBase / 1000
+  if (baseUnit === 'ml' && (u === 'l' || u === 'litre' || u === 'liter')) return gapInBase / 1000
+  return gapInBase
+}
 
 export async function generateShoppingListAI({ stores, meals }) {
-  const storesSummary = stores.map((s) => `${s.name}: ${s.quantity} ${s.unit}`).join('\n') || 'None'
+  // Step 1: Aggregate all ingredient quantities across the entire meal plan
   const ingredientMap = {}
   for (const meal of meals) {
     for (const ing of Array.isArray(meal.ingredients) ? meal.ingredients : []) {
-      const key = ing.name?.toLowerCase() || ''
+      const key = (ing.name || '').toLowerCase().trim()
       if (!key) continue
-      if (!ingredientMap[key]) ingredientMap[key] = { name: ing.name, quantity: 0, unit: ing.unit || '' }
-      ingredientMap[key].quantity += Number(ing.quantity) || 0
+      if (!ingredientMap[key]) ingredientMap[key] = { name: ing.name, totalQty: 0, unit: ing.unit || '' }
+      ingredientMap[key].totalQty += Number(ing.quantity) || 0
     }
   }
-  const ingredientsSummary =
-    Object.values(ingredientMap)
-      .map((i) => `${i.name}: ${i.quantity} ${i.unit}`)
-      .join('\n') || 'None'
 
-  const prompt = `You are generating a shopping list for a boat voyage.
+  // Step 2: For each ingredient, find the best store match and calculate the gap
+  const needToBuy = []
+  const uncategorized = []
 
-CURRENT STORES:
-${storesSummary}
+  for (const ing of Object.values(ingredientMap)) {
+    const ingLower = ing.name.toLowerCase().trim()
 
-MEAL PLAN INGREDIENTS REQUIRED:
-${ingredientsSummary}
+    // Same fuzzy matching used by cooked-meal deduction
+    const storeMatch =
+      stores.find((s) => s.name.toLowerCase() === ingLower) ||
+      stores.find((s) =>
+        s.name.toLowerCase().includes(ingLower) ||
+        ingLower.includes(s.name.toLowerCase())
+      )
 
-Calculate what needs to be purchased. Account for quantities already in stores.
-Add a 10-15% buffer for wastage and unexpected use.
-Group by category and suggest practical purchase quantities (e.g. round up to nearest pack size).
+    const ingNorm = normalizeToBase(ing.totalQty, ing.unit)
+    let gapQty = ing.totalQty
+    const category = storeMatch?.category || null
 
-Return ONLY a JSON array, no markdown:
-[{ "item_name": string, "quantity": number, "unit": string, "category": string }]`
+    if (storeMatch) {
+      const storeNorm = normalizeToBase(storeMatch.quantity, storeMatch.unit)
+      if (storeNorm.baseUnit === ingNorm.baseUnit) {
+        // Units are compatible — calculate the real gap
+        const rawGap = ingNorm.qty - storeNorm.qty
+        if (rawGap <= 0) continue // already have enough — skip
+        gapQty = denormalizeGap(rawGap, ingNorm.baseUnit, ing.unit)
+      }
+      // If units are incompatible (e.g. ingredient in "g", store in "cans")
+      // we can't compare — conservatively keep the item on the list
+    }
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-opus-4-5',
-      max_tokens: 2000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  })
-  const data = await response.json()
-  if (data.error) throw new Error(data.error.message)
-  const rawText = data.content[0].text
-  console.log('[Galley AI raw response]', rawText)
-  return parseAIJson(rawText)
+    // Apply 10% buffer and round to sensible precision
+    const buffered = gapQty * 1.1
+    const rounded = buffered >= 10 ? Math.ceil(buffered) : Math.round(buffered * 10) / 10
+
+    needToBuy.push({
+      item_name: ing.name,
+      quantity: rounded,
+      unit: ing.unit,
+      category: category || 'Other',
+    })
+    if (!category) uncategorized.push(ing.name)
+  }
+
+  // Step 3: Batch-categorize any items the store match couldn't classify
+  if (uncategorized.length > 0) {
+    try {
+      const cats = await categorizeItemsAI(uncategorized)
+      for (const item of needToBuy) {
+        if (item.category === 'Other' && cats[item.item_name]) {
+          item.category = cats[item.item_name]
+        }
+      }
+    } catch {
+      // Categorization failure is non-fatal — items stay as 'Other'
+    }
+  }
+
+  console.log(`[Shopping list] ${Object.keys(ingredientMap).length} ingredients → ${needToBuy.length} gaps to buy`)
+  return needToBuy
 }
 
 // Batch-categorize items that keyword lookup couldn't classify.
